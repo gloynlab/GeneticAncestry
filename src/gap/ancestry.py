@@ -70,24 +70,27 @@ class Ancestry:
                 extracted_file = os.path.join(out_dir, f'{source}_unrelated.vcf.gz')
                 self._extract_samples(out_vcf, sampleID_file, extracted_file)
 
-    def merge_dataset_with_reference(self, dataset_vcf, reference_vcf, out_file, threads=4):
+    def merge_dataset_with_reference(self, dataset_vcf, reference_vcf, out_file, r2_threshold=None, threads=4):
         try:
             out_dir = os.path.dirname(out_file)
             if not os.path.exists(out_dir):
                 os.makedirs(out_dir)
 
+            if r2_threshold is not None:
+                dataset_vcf_in = dataset_vcf
+                dataset_vcf = dataset_vcf.split('.vcf')[0] + f'_R2_{r2_threshold}.vcf.gz'
+                cmd = f'bcftools filter --threads {threads} -i "R2 > {r2_threshold}" {dataset_vcf_in} -Oz -o {dataset_vcf}'
+                subprocess.run(cmd, shell=True, check=True)
+
             dataset_bed = dataset_vcf.split('.vcf')[0]
             reference_bed = reference_vcf.split('.vcf')[0]
 
-            if os.path.exists(dataset_bed + '.bed') and os.path.exists(dataset_bed + '.bim') and os.path.exists(dataset_bed + '.fam'):
-                print(f"{dataset_bed} bed/bim/fam already exist. Skipping conversion from vcf.")
-            else:
-                try:
-                    cmd = f'plink --keep-allele-order --double-id --vcf {dataset_vcf} --make-bed --out {dataset_bed} --threads {threads}'
-                    subprocess.run(cmd, shell=True, check=True)
-                except:
-                    print(f"Error converting {dataset_vcf} to bed.")
-                    return
+            try:
+                cmd = f'plink --keep-allele-order --double-id --vcf {dataset_vcf} --make-bed --out {dataset_bed} --threads {threads}'
+                subprocess.run(cmd, shell=True, check=True)
+            except:
+                raise ValueError(f"Error converting {dataset_vcf} to bed/bim/fam. Please check the VCF file.")
+
             if os.path.exists(reference_bed + '.bed') and os.path.exists(reference_bed + '.bim') and os.path.exists(reference_bed + '.fam'):
                 print(f"{reference_bed} bed/bim/fam already exist. Skipping conversion from vcf.")
             else:

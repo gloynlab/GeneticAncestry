@@ -4,6 +4,14 @@ from .models import GapLearn
 import os
 import pandas as pd
 
+def parse_float_or_none(value):
+    if value is None or str(value).lower() == 'none':
+        return None
+    try:
+        return float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"Invalid float value: '{value}'")
+
 def get_parser():
     formatter_class = argparse.ArgumentDefaultsHelpFormatter
     parser = argparse.ArgumentParser(formatter_class=formatter_class)
@@ -17,6 +25,7 @@ def get_parser():
     p2.add_argument('--dataset', type=str, required=True, help='your input vcf file, must be on GRCh38 build and the REF allele must be consistent with the reference genome')
     p2.add_argument('--reference', type=str, default='ref/1000genomes_unrelated.vcf.gz', help='the vcf file of the reference data downloaded previously')
     p2.add_argument('--output', type=str, default='data/merged', help='the merged file, prefix only')
+    p2.add_argument('--r2_threshold', type=parse_float_or_none, default=None, help='the R2 threshold for filtering the input dataset based on imputation quality, skip filtering if set to None')
     p2.add_argument('--threads', type=int, default=2, help='number of threads to use')
 
     p3 = subparsers.add_parser('feature-engineering', help='feature engineering for ancestry prediction')
@@ -83,7 +92,7 @@ def main():
     if args.command == 'get-reference-data':
         an.get_reference_data(source=args.source, out_dir=args.output_dir)
     elif args.command == 'merge-dataset-with-reference':
-        an.merge_dataset_with_reference(dataset_vcf=args.dataset, reference_vcf=args.reference, out_file=args.output, threads=args.threads)
+        an.merge_dataset_with_reference(dataset_vcf=args.dataset, reference_vcf=args.reference, out_file=args.output, r2_threshold=args.r2_threshold, threads=args.threads)
     elif args.command == 'feature-engineering':
         pruning = (args.pruning.lower() == 'true')
         pruning_params = [float(x) for x in args.pruning_params.split(',')]
