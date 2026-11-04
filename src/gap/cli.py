@@ -488,9 +488,10 @@ def main() -> None:
                     )
                     metrics_file_sorted = metrics_file.replace(".txt", "_sorted_best.txt")
                     model_file = args.model_file.replace(".pkl", f"_Population_within_{pop}.pkl")
-                    model_name = pd.read_table(
-                        metrics_file_sorted, header=0, sep="\t"
-                    )["model"].iloc[0]
+                    if not model_name:
+                        model_name = pd.read_table(
+                            metrics_file_sorted, header=0, sep="\t"
+                        )["model"].iloc[0]
                     print("Using model:", model_name)
                     gl.predict(
                         in_file=in_file,
