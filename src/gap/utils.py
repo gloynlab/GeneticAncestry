@@ -54,6 +54,8 @@ class Utils:
             "GDA_batch18/GDA_batch18_raw.fam",
         ],
         qc_file: Optional[str] = None,
+        rrid_files: Optional[List[str]] = None,
+        race_files: Optional[List[str]] = None,
         extra_files: List[str] = [],
     ) -> None:
         """Annotate a GAP table with QC status, sample metadata, and project info.
@@ -62,6 +64,8 @@ class Utils:
             in_file: Path to the input tab-delimited GAP table.
             fam_files: PLINK ``.fam`` files used to resolve sample names.
             qc_file: Optional file of sample IDs that passed QC, one per line.
+            rrid_files: Optional file mapping sample names to RRIDs.
+            race_files: Optional file mapping sample names or RRIDs to self-reported race.
             extra_files: Files providing array, batch, sex, and source metadata.
 
         Raises:
@@ -71,6 +75,7 @@ class Utils:
         df = pd.read_table(in_file, header=0, sep="\t")
         df.insert(1, "Extra", ".")
         df.insert(1, "QC", ".")
+        df.insert(1, "Race", ".")
         df.insert(1, "RRID", ".")
         df.insert(1, "Project", ".")
         df.insert(1, "Batch", ".")
@@ -122,6 +127,39 @@ class Utils:
         df["SampleName"] = [
             self._update_sample_name(D.get(s, s)) for s in df["SampleID"]
         ]
+
+        # adding RRID column
+        if rrid_files is not None:
+            rrid_dict = {}
+            for rrid_file in rrid_files:
+                if not os.path.exists(rrid_file):
+                    raise ValueError(
+                        f"{rrid_file} does not exist. Please check the path."
+                    )
+                df_rrid = pd.read_table(rrid_file, header=0, sep="\t")
+                rrid_dict.update(dict(zip(df_rrid.iloc[:, 0], df_rrid.iloc[:, 1])))
+            df["RRID"] = [rrid_dict.get(s, ".") for s in df["SampleName"]]
+
+        if race_files is not None:
+            race_dict = {}
+            for race_file in race_files:
+                if not os.path.exists(race_file):
+                    raise ValueError(
+                        f"{race_file} does not exist. Please check the path."
+                    )
+                df_race = pd.read_table(race_file, header=0, sep="\t")
+                race_dict.update(dict(zip(df_race.iloc[:, 0], df_race.iloc[:, 1])))
+            Race = []
+            for n in range(df.shape[0]):
+                sample_name = df.iloc[n]["SampleName"]
+                rrid = df.iloc[n]["RRID"]
+                if sample_name in race_dict:
+                    Race.append(race_dict[sample_name])
+                elif rrid in race_dict:
+                    Race.append(race_dict[rrid])
+                else:
+                    Race.append(".")
+            df["Race"] = Race
 
         # adding Project
         df["Project"] = [self._get_project_name(s) for s in df["SampleName"]]
