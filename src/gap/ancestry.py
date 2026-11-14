@@ -200,17 +200,20 @@ class Ancestry:
                 f"plink --keep-allele-order --bfile {dataset_bed} "
                 f"--extract {shared_variants_file} --make-bed --out {dataset_extracted_bed}"
             )
+            print(f"Extracting shared variants from dataset: {cmd}")
             subprocess.run(cmd, shell=True, check=True)
             cmd = (
                 f"plink --keep-allele-order --bfile {reference_bed} "
                 f"--extract {shared_variants_file} --make-bed --out {reference_extracted_bed}"
             )
+            print(f"Extracting shared variants from reference: {cmd}")
             subprocess.run(cmd, shell=True, check=True)
 
             cmd = (
                 f"plink --keep-allele-order --bfile {reference_extracted_bed} "
                 f"--bmerge {dataset_extracted_bed} --make-bed --out {out_file} --threads {threads}"
             )
+            print(f"Merging dataset and reference: {cmd}")
             subprocess.run(cmd, shell=True, check=True)
 
             os.remove(dataset_extracted_bed + ".bed")
