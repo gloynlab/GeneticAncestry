@@ -11,6 +11,7 @@ matplotlib.use("Agg")
 import pandas as pd
 import pylab as plt
 from pySankey.sankey import sankey
+import tempfile
 
 BASE = resources.files(__package__.split(".")[0])
 config_dir = f"{BASE}/config"
