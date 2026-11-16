@@ -198,13 +198,13 @@ class Ancestry:
 
             cmd = (
                 f"plink --keep-allele-order --bfile {dataset_bed} "
-                f"--extract {shared_variants_file} --make-bed --out {dataset_extracted_bed}"
+                f"--extract {shared_variants_file} --make-bed --out {dataset_extracted_bed} --threads {threads}"
             )
             print(f"Extracting shared variants from dataset: {cmd}")
             subprocess.run(cmd, shell=True, check=True)
             cmd = (
                 f"plink --keep-allele-order --bfile {reference_bed} "
-                f"--extract {shared_variants_file} --make-bed --out {reference_extracted_bed}"
+                f"--extract {shared_variants_file} --make-bed --out {reference_extracted_bed} --threads {threads}"
             )
             print(f"Extracting shared variants from reference: {cmd}")
             subprocess.run(cmd, shell=True, check=True)
