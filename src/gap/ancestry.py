@@ -240,7 +240,7 @@ class Ancestry:
             dataset_bim: Path to the dataset's PLINK ``.bim`` file.
             reference_bim: Path to the reference's PLINK ``.bim`` file.
             out_file: Path to write the list of shared variant IDs to.
-            update_bim: Whether to overwrite both ``.bim`` files in place with
+            update_bim: Whether to overwrite the ``.bim`` file in place with
                 the rewritten variant IDs.
             low_memory: Whether to use a low-memory approach that avoids
         """
@@ -264,7 +264,6 @@ class Ancestry:
                 print(f"Shared variants saved to {out_file}")
                 if update_bim:
                     df1.to_csv(dataset_bim, header=False, index=False, sep="\t")
-                    df2.to_csv(reference_bim, header=False, index=False, sep="\t")
             except Exception as e:
                 print(f"Error getting shared variants: {e}")
         else:
@@ -297,16 +296,6 @@ class Ancestry:
                 finally:
                     if out1 is not None:
                         out1.close()
-
-                out2 = open_tmp(reference_bim) if update_bim else None
-                try:
-                    with open(out_file, "w") as f:
-                        for vid in iter_ids(reference_bim, out2):
-                            if vid in dataset_ids:
-                                f.write(vid + "\n")
-                finally:
-                    if out2 is not None:
-                        out2.close()
                 print(f"Shared variants saved to {out_file}")
 
                 for tmp, path in pending:
