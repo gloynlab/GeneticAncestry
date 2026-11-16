@@ -216,13 +216,6 @@ class Ancestry:
             print(f"Merging dataset and reference: {cmd}")
             subprocess.run(cmd, shell=True, check=True)
 
-            os.remove(dataset_extracted_bed + ".bed")
-            os.remove(dataset_extracted_bed + ".bim")
-            os.remove(dataset_extracted_bed + ".fam")
-            os.remove(reference_extracted_bed + ".bed")
-            os.remove(reference_extracted_bed + ".bim")
-            os.remove(reference_extracted_bed + ".fam")
-            os.remove(shared_variants_file)
         except Exception as e:
             print(f"Error merging VCFs: {e}")
 
