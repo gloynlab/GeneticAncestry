@@ -221,7 +221,7 @@ class Ancestry:
 
     def _get_shared_variants(
         self, dataset_bim: str, reference_bim: str, out_file: str,
-        update_bim: bool = True, low_memory: bool = True,
+        update_bim: bool = True
     ) -> None:
         """Find variants shared between a dataset and reference ``.bim`` file.
 
@@ -233,75 +233,30 @@ class Ancestry:
             dataset_bim: Path to the dataset's PLINK ``.bim`` file.
             reference_bim: Path to the reference's PLINK ``.bim`` file.
             out_file: Path to write the list of shared variant IDs to.
-            update_bim: Whether to overwrite the ``.bim`` file in place with
-                the rewritten variant IDs.
-            low_memory: Whether to use a low-memory approach that avoids
+            update_bim: Whether to overwrite the ``dataset_bim`` file in place with
+            the rewritten variant IDs.
         """
 
-        if not low_memory:
-            try:
-                df1 = pd.read_table(dataset_bim, header=None, sep="\t")
-                df1.iloc[:, 1] = df1.apply(
-                    lambda row: ":".join([str(row[0]), str(row[3]), str(row[5]), str(row[4])]), axis=1
-                )
-                df2 = pd.read_table(reference_bim, header=None, sep="\t")
-                df2.iloc[:, 1] = df2.apply(
-                    lambda row: ":".join([str(row[0]), str(row[3]), str(row[5]), str(row[4])]), axis=1
-                )
-                shared_variants = set(df1.iloc[:, 1]).intersection(set(df2.iloc[:, 1]))
-                with open(out_file, "w") as f:
-                    for n in range(df2.shape[0]):
-                        k = df2.iloc[n, 1]
-                        if k in shared_variants:
-                            f.write(k + "\n")
-                print(f"Shared variants saved to {out_file}")
-                if update_bim:
-                    df1.to_csv(dataset_bim, header=False, index=False, sep="\t")
-            except Exception as e:
-                print(f"Error getting shared variants: {e}")
-        else:
-            pending = []  # (tmp_path, final_path) pairs to swap in on success
-
-            def open_tmp(path):
-                fd, tmp = tempfile.mkstemp(
-                    dir=os.path.dirname(os.path.abspath(path)), suffix=".tmp"
-                )
-                pending.append((tmp, path))
-                return os.fdopen(fd, "w")
-
-            def iter_ids(path, out):
-                """Yield ``chrom:pos:ref:alt`` IDs; optionally write rewritten lines to ``out``."""
-                with open(path) as fh:
-                    for line in fh:
-                        if not line.strip():
-                            continue  # pandas skips blank lines too
-                        fields = line.rstrip("\r\n").split("\t")
-                        fields[1] = vid = ":".join((fields[0], fields[3], fields[5], fields[4]))
-                        if out is not None:
-                            out.write("\t".join(fields))
-                            out.write("\n")
-                        yield vid
-
-            try:
-                out1 = open_tmp(dataset_bim) if update_bim else None
-                try:
-                    dataset_ids = set(iter_ids(dataset_bim, out1))
-                except:
-                    if out1 is not None:
-                        out1.close()
-                print(f"Shared variants saved to {out_file}")
-
-                for tmp, path in pending:
-                    os.replace(tmp, path)
-                pending.clear()
-            except Exception as e:
-                print(f"Error getting shared variants: {e}")
-            finally:
-                for tmp, _ in pending:
-                    try:
-                        os.remove(tmp)
-                    except OSError:
-                        pass
+        try:
+            df1 = pd.read_table(dataset_bim, header=None, sep="\t")
+            df1.iloc[:, 1] = df1.apply(
+                lambda row: ":".join([str(row[0]), str(row[3]), str(row[5]), str(row[4])]), axis=1
+            )
+            df2 = pd.read_table(reference_bim, header=None, sep="\t")
+            df2.iloc[:, 1] = df2.apply(
+                lambda row: ":".join([str(row[0]), str(row[3]), str(row[5]), str(row[4])]), axis=1
+            )
+            shared_variants = set(df1.iloc[:, 1]).intersection(set(df2.iloc[:, 1]))
+            with open(out_file, "w") as f:
+                for n in range(df2.shape[0]):
+                    k = df2.iloc[n, 1]
+                    if k in shared_variants:
+                        f.write(k + "\n")
+            print(f"Shared variants saved to {out_file}")
+            if update_bim:
+                df1.to_csv(dataset_bim, header=False, index=False, sep="\t")
+        except Exception as e:
+            print(f"Error getting shared variants: {e}")
 
     def feature_engineering(
         self,
