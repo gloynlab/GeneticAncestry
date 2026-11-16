@@ -286,7 +286,7 @@ class Ancestry:
                 out1 = open_tmp(dataset_bim) if update_bim else None
                 try:
                     dataset_ids = set(iter_ids(dataset_bim, out1))
-                finally:
+                except:
                     if out1 is not None:
                         out1.close()
                 print(f"Shared variants saved to {out_file}")
